@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#15121d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="القرعة">
+<title>قرعة الأصابع</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&display=swap">
+<style>
+/* VOICE   a party game for friends around one phone: quick, playful, nothing to read twice
+   IDEA    a night game table where every fingertip lights its own glowing token
+   PICTURE the live arena: a ring under each finger, countdown arcs, then the verdict drawn on the table
+   COLOUR  ink-violet table #15121d, ten bright token colours, team red #ff3d55 and team blue #2f80ff
+   TYPE    Readex Pro 700 for the title and rank numbers, Readex Pro 400/500 for labels
+   LAYOUT  slim header with title and timer, three-way mode switch, the arena fills the rest of the screen */
+:root{color-scheme:dark;--bg:#15121d;--panel:#1e1929;--ink:#f6f3ff;--mute:#aaa3bf;--line:#2f2942;--red:#ff3d55;--blue:#2f80ff}
+:root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:16px/1.5 "Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px 10px}
+h1{margin:0;font-size:clamp(24px,6vw,32px);line-height:1.05;font-weight:700;letter-spacing:-.02em}
+button{font:inherit;color:inherit;cursor:pointer}
+.chip{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--panel);font-size:15px;font-weight:500;white-space:nowrap}
+.chip svg{width:18px;height:18px;flex:none}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 16px 12px;padding:4px;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
+.modes button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;border:0;border-radius:14px;background:transparent;color:var(--mute);font-size:14px;font-weight:500;transition:background .2s,color .2s}
+.modes svg{width:22px;height:22px}
+.modes button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.chip:focus-visible,.modes button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.chip,.modes{transition:opacity .2s}
+body.busy .chip,body.busy .modes{opacity:.4;pointer-events:none}
+#arena{position:relative;flex:1;margin:0 8px 8px;border-radius:26px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(110% 80% at 50% 50%,#251f36 0%,#191424 55%,#120f19 100%);touch-action:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#idle{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;padding:24px;text-align:center;pointer-events:none;transition:opacity .25s}
+#idle.hide,#status.hide{opacity:0}
+.ghosts{position:relative;width:184px;height:118px;margin-bottom:14px}
+.ghosts i{position:absolute;width:64px;height:64px;border-radius:50%;border:6px solid currentColor;box-shadow:0 0 0 12px color-mix(in srgb,currentColor 16%,transparent);animation:breathe 2.4s ease-in-out infinite}
+.ghosts i::after{content:"";position:absolute;inset:9px;border-radius:50%;background:currentColor}
+.ghosts i:nth-child(1){right:6px;top:48px;color:#ff5d73}
+.ghosts i:nth-child(2){right:60px;top:6px;color:#ffe14d;animation-delay:.4s}
+.ghosts i:nth-child(3){right:114px;top:48px;color:#3ddbd9;animation-delay:.8s}
+@keyframes breathe{0%,100%{transform:scale(.9)}50%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.ghosts i{animation:none}}
+#idle strong{font-size:clamp(28px,7.5vw,40px);line-height:1.08;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+#idle p{margin:0;max-width:32ch;font-size:16px;text-wrap:balance}
+#idle .sub{color:var(--mute);font-size:15px}
+#status{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;max-width:calc(100% - 24px);padding:8px 18px;border-radius:20px;background:rgba(12,10,18,.8);text-align:center;font-size:16px;font-weight:500;pointer-events:none;transition:opacity .2s}
+#status small{color:var(--mute);font-size:13px;font-weight:400}
+#status small:empty{display:none}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.pill{padding:2px 12px;border-radius:12px;color:#fff;font-weight:700;white-space:nowrap}
+.pill.r{background:var(--red)}
+.pill.b{background:var(--blue)}
+</style>
+</head>
+<body>
+<header>
+  <h1>قرعة الأصابع</h1>
+  <button class="chip" id="dur" type="button" aria-label="مدة الانتظار"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 2M9.5 2.5h5"/></svg><span id="durTxt">ثانيتان</span></button>
+</header>
+<nav class="modes" aria-label="نوع القرعة">
+  <button type="button" id="m-one" data-m="one" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></svg>شخص واحد</button>
+  <button type="button" id="m-order" data-m="order" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 20.5h18"/><rect x="9" y="5" width="6" height="15.5" rx="1"/><rect x="3" y="11" width="6" height="9.5" rx="1"/><rect x="15" y="14" width="6" height="6.5" rx="1"/></svg>ترتيب</button>
+  <button type="button" id="m-teams" data-m="teams" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="5.2" fill="currentColor"/><circle cx="16" cy="12" r="5.2" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>فريقان</button>
+</nav>
+<main id="arena">
+  <canvas id="cv" aria-hidden="true"></canvas>
+  <div id="idle">
+    <div class="ghosts" aria-hidden="true"><i></i><i></i><i></i></div>
+    <strong>ضعوا أصابعكم على الشاشة</strong>
+    <p id="idleMode">يبقى إصبع واحد فقط، وهو المختار</p>
+    <p class="sub" id="idleSub">تظهر النتيجة بعد ثانيتين من ثبات الأصابع</p>
+  </div>
+  <div id="status" class="hide" role="status" aria-live="polite"><span id="stMain"></span><small id="stHint"></small></div>
+</main>
+<script>
+{
+const $=id=>document.getElementById(id);
+const arena=$('arena'),cv=$('cv'),ctx=cv.getContext('2d'),idle=$('idle'),statusEl=$('status'),stMain=$('stMain'),stHint=$('stHint');
+const durBtn=$('dur'),durTxt=$('durTxt'),idleMode=$('idleMode'),idleSub=$('idleSub');
+const modeBtns=[...document.querySelectorAll('.modes button')];
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const PAL=['#ff5d73','#ffb020','#ffe14d','#9be15d','#3ddbd9','#5aa9ff','#b69cff','#ff8fd1','#ff7a3d','#53e3a6'].map(hex);
+const RED=hex('#ff3d55'),BLUE=hex('#2f80ff'),WHITE=[255,255,255];
+const DURS=[1,2,3,5];
+const DUR_NAME={1:'ثانية',2:'ثانيتان',3:'3 ثوانٍ',5:'5 ثوانٍ'};
+const DUR_AFTER={1:'بعد ثانية',2:'بعد ثانيتين',3:'بعد 3 ثوانٍ',5:'بعد 5 ثوانٍ'};
+const MODE_TEXT={one:'يبقى إصبع واحد فقط، وهو المختار',order:'يأخذ كل إصبع رقمًا من 1 إلى عدد المشاركين',teams:'ينقسم الجميع إلى أحمر وأزرق بالتساوي'};
+const TAU=Math.PI*2,BORN=320,DIE=260;
+const clamp01=v=>v<0?0:v>1?1:v;
+const easeOut=v=>1-(1-v)**3;
+const easeBack=v=>{const c=1.70158;return 1+(c+1)*(v-1)**3+c*(v-1)**2};
+const lerp=(a,b,k)=>a.map((v,i)=>v+(b[i]-v)*k);
+const col=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+const rnd=n=>{const C=window.crypto;if(C&&C.getRandomValues){const a=new Uint32Array(1),lim=Math.floor(4294967296/n)*n;do{C.getRandomValues(a)}while(a[0]>=lim);return a[0]%n}return Math.floor(Math.random()*n)};
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const people=n=>n===2?'مشاركان':n<=10?n+' مشاركين':n+' مشاركًا';
+const fingersWord=n=>n<=10?n+' أصابع':n+' إصبعًا';
+
+let mode='one',dur=2;
+try{const m=localStorage.getItem('qr-mode'),d=+localStorage.getItem('qr-dur');if(MODE_TEXT[m])mode=m;if(DURS.includes(d))dur=d}catch(e){}
+const save=()=>{try{localStorage.setItem('qr-mode',mode);localStorage.setItem('qr-dur',String(dur))}catch(e){}};
+
+let fingers=[],phase='gather',lastChange=0,revealAt=0,winner=null,cancelAt=0,cancelN=0,W=0,H=0,dpr=1,R=50,raf=0;
+const down=new Set();
+const now=()=>performance.now();
+const active=()=>fingers.filter(f=>!f.dying);
+const pickColor=()=>{const used=new Set(active().map(f=>f.ci)),all=PAL.map((_,i)=>i),free=all.filter(i=>!used.has(i)),pool=free.length?free:all;return pool[rnd(pool.length)]};
+
+function kick(){if(!raf)raf=requestAnimationFrame(frame)}
+function lift(f,t0){if(phase==='gather'){f.dying=t0;lastChange=t0}else f.lifted=true}
+function sync(e,t0){
+  const live=new Set(Array.from(e.touches,t=>t.identifier));
+  for(const id of [...down])if(!live.has(id))down.delete(id);
+  for(const f of fingers)if(!f.dying&&!f.lifted&&!live.has(f.id))lift(f,t0);
+}
+function onStart(e){
+  e.preventDefault();
+  const t0=now(),r=arena.getBoundingClientRect();
+  sync(e,t0);
+  if(phase==='result'){
+    if(down.size||t0-revealAt<900){for(const t of e.changedTouches)down.add(t.identifier);changed();return}
+    fingers=[];phase='gather';winner=null;
+  }
+  for(const t of e.changedTouches){
+    down.add(t.identifier);
+    const ci=pickColor();
+    fingers.push({id:t.identifier,x:t.clientX-r.left,y:t.clientY-r.top,ci,col:PAL[ci],born:t0,dying:0,lifted:false,rank:0,team:-1,seq:0});
+  }
+  lastChange=t0;cancelAt=0;changed();
+}
+function onMove(e){
+  e.preventDefault();
+  const r=arena.getBoundingClientRect();
+  for(const t of e.changedTouches){const f=fingers.find(f=>f.id===t.identifier&&!f.dying&&!f.lifted);if(f){f.x=t.clientX-r.left;f.y=t.clientY-r.top}}
+  kick();
+}
+function onEnd(e){
+  e.preventDefault();
+  const t0=now(),before=active().filter(f=>!f.lifted).length;
+  for(const t of e.changedTouches){down.delete(t.identifier);const f=fingers.find(f=>f.id===t.identifier&&!f.dying&&!f.lifted);if(f)lift(f,t0)}
+  sync(e,t0);
+  if(e.type==='touchcancel'&&phase==='gather'&&before>=5){cancelAt=t0;cancelN=before;setTimeout(updateStatus,4100)}
+  changed();
+}
+function changed(){
+  idle.classList.toggle('hide',active().length>0);
+  document.body.classList.toggle('busy',down.size>0);
+  updateStatus();kick();
+}
+function updateStatus(){
+  const act=active(),n=act.length;let main='',hint='',html=false;
+  if(phase==='gather'){
+    if(n===1){main='إصبع واحد';hint='ننتظر إصبعًا آخر على الأقل'}
+    else if(n>1){main=people(n);hint=mode==='teams'&&n%2?'العدد فردي، فسيزيد أحد الفريقين بشخص':'اثبتوا، النتيجة '+DUR_AFTER[dur]}
+    else if(cancelAt&&now()-cancelAt<4000){main='توقفت اللمسات';hint='قد لا يقبل جوالك أكثر من '+fingersWord(cancelN)+' معًا'}
+  }else{
+    if(mode==='one')main='وقع الاختيار';
+    else if(mode==='order')main='الترتيب من 1 إلى '+n;
+    else{const red=act.filter(f=>f.team===0).length;html=true;main=`<span class="pills"><span class="pill r">الأحمر ${red}</span><span class="pill b">الأزرق ${n-red}</span></span>`}
+    if(!down.size)hint='المسوا الشاشة لقرعة جديدة';
+  }
+  if(html)stMain.innerHTML=main;else stMain.textContent=main;
+  stHint.textContent=hint;
+  statusEl.classList.toggle('hide',!main);
+}
+function reveal(t){
+  const act=active();phase='result';revealAt=t;
+  const order=shuffle(act.slice());
+  if(mode==='one'){winner=order[0];for(const f of act)if(f!==winner)f.dying=t}
+  else if(mode==='order')order.forEach((f,i)=>{f.rank=i+1});
+  else{const s=rnd(2);order.forEach((f,i)=>{f.team=(i+s)%2;f.seq=i})}
+  try{if(navigator.vibrate)navigator.vibrate(mode==='one'?[30,50,30]:35)}catch(e){}
+  changed();
+}
+function frame(t){
+  raf=0;
+  if(phase==='gather'&&active().length>=2&&t-lastChange>=dur*1000)reveal(t);
+  const before=fingers.length;
+  fingers=fingers.filter(f=>!f.dying||t-f.dying<DIE);
+  if(fingers.length!==before)changed();
+  draw(t);
+  if(phase==='gather'?fingers.length>0:(down.size>0||t-revealAt<3000))kick();
+}
+function draw(t){
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const counting=phase==='gather'&&active().length>=2,prog=counting?clamp01((t-lastChange)/(dur*1000)):0;
+  if(phase==='result'&&mode==='one'&&winner){
+    const k=easeOut(clamp01((t-revealAt)/700)),far=Math.hypot(W,H)+R,hole=far+(R*2.1-far)*k;
+    ctx.fillStyle=col(winner.col,.9);
+    ctx.beginPath();ctx.rect(0,0,W,H);ctx.arc(winner.x,winner.y,hole,0,TAU);ctx.fill('evenodd');
+  }
+  for(const f of fingers)drawFinger(f,t,counting,prog);
+}
+function drawFinger(f,t,counting,prog){
+  let s=easeBack(clamp01((t-f.born)/BORN)),a=1;
+  if(f.dying){const d=clamp01((t-f.dying)/DIE);s*=1-easeOut(d);a=1-d}
+  if(s<=.01)return;
+  if(phase==='gather'&&!f.dying)s*=1+Math.sin((t-f.born)/(counting?150:330))*.04;
+  if(f===winner)s*=1+.2*easeBack(clamp01((t-revealAt)/520));
+  let c=f.col;
+  if(f.team>=0)c=lerp(f.col,f.team?BLUE:RED,easeOut(clamp01((t-revealAt-f.seq*70)/380)));
+  const r=R*s,x=f.x,y=f.y;
+  ctx.globalAlpha=a;
+  const g=ctx.createRadialGradient(x,y,r*.6,x,y,r*1.9);
+  g.addColorStop(0,col(c,.42));g.addColorStop(1,col(c,0));
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.9,0,TAU);ctx.fill();
+  ctx.lineWidth=Math.max(5,r*.13);ctx.strokeStyle=col(c,1);ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.stroke();
+  const cg=ctx.createRadialGradient(x-r*.2,y-r*.25,r*.05,x,y,r*.64);
+  cg.addColorStop(0,col(lerp(c,WHITE,.4),1));cg.addColorStop(1,col(c,1));
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(x,y,r*.62,0,TAU);ctx.fill();
+  if(counting&&!f.dying){
+    ctx.lineCap='round';ctx.lineWidth=4;
+    ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.arc(x,y,r+13,0,TAU);ctx.stroke();
+    if(prog>0){ctx.strokeStyle='rgba(255,255,255,.95)';ctx.beginPath();ctx.arc(x,y,r+13,-Math.PI/2,-Math.PI/2+TAU*prog);ctx.stroke()}
+  }
+  if(f.rank)drawBadge(f,t,c,r);
+  ctx.globalAlpha=1;
+}
+function drawBadge(f,t,c,r){
+  const k=clamp01((t-revealAt-(f.rank-1)*120)/300);if(k<=0)return;
+  const br=Math.max(17,R*.36)*easeBack(k),gap=br+12;
+  let by=f.y-r-gap;if(by<br+6)by=f.y+r+gap;
+  const bx=Math.min(W-br-6,Math.max(br+6,f.x));
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(bx,by,br,0,TAU);ctx.fill();
+  ctx.lineWidth=3.5;ctx.strokeStyle=col(c,1);ctx.stroke();
+  ctx.fillStyle='#15121d';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.font=`700 ${Math.max(1,Math.round(br*(f.rank>9?.95:1.2)))}px "Readex Pro",system-ui,sans-serif`;
+  ctx.fillText(String(f.rank),bx,by+br*.06);
+}
+function resize(){
+  const r=arena.getBoundingClientRect();W=r.width;H=r.height;dpr=Math.min(window.devicePixelRatio||1,3);
+  cv.width=Math.max(1,Math.round(W*dpr));cv.height=Math.max(1,Math.round(H*dpr));
+  R=Math.max(40,Math.min(58,Math.min(W,H)*.13));draw(now());kick();
+}
+function renderMode(){modeBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===mode)));idleMode.textContent=MODE_TEXT[mode]}
+function renderDur(){durTxt.textContent=DUR_NAME[dur];durBtn.setAttribute('aria-label','مدة الانتظار: '+DUR_NAME[dur]);idleSub.textContent='تظهر النتيجة '+DUR_AFTER[dur]+' من ثبات الأصابع'}
+
+modeBtns.forEach(b=>b.addEventListener('click',()=>{if(down.size)return;mode=b.dataset.m;save();fingers=[];phase='gather';winner=null;renderMode();changed()}));
+durBtn.addEventListener('click',()=>{if(down.size)return;dur=DURS[(DURS.indexOf(dur)+1)%DURS.length];save();renderDur();updateStatus()});
+const opt={passive:false};
+arena.addEventListener('touchstart',onStart,opt);
+arena.addEventListener('touchmove',onMove,opt);
+arena.addEventListener('touchend',onEnd,opt);
+arena.addEventListener('touchcancel',onEnd,opt);
+arena.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('gesturestart',e=>e.preventDefault());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;down.clear();if(phase==='gather')fingers=[];else fingers.forEach(f=>{f.lifted=true});changed()});
+const ro=new ResizeObserver(resize);ro.observe(arena);
+renderMode();renderDur();
+if(document.fonts)document.fonts.ready.then(kick);
+}
+</script>
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
+</body>
+</html>
