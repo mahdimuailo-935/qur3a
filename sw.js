@@ -1,4 +1,4 @@
-const CACHE = 'qur3a-v1';
+const CACHE = 'qur3a-v2';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&display=swap';
 
@@ -36,9 +36,18 @@ self.addEventListener('fetch', e => {
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const nav = req.mode === 'navigate';
-    const hit = await c.match(nav ? './' : req, { ignoreVary: true, ignoreSearch: nav });
+    if (nav) {
+      try {
+        const r = await fetch(req);
+        if (r.ok) c.put('./', r.clone());
+        return r;
+      } catch (err) {
+        return (await c.match('./', { ignoreSearch: true })) || Response.error();
+      }
+    }
+    const hit = await c.match(req, { ignoreVary: true });
     const net = fetch(req).then(r => {
-      if (r && (r.ok || r.type === 'opaque')) c.put(nav ? './' : req, r.clone());
+      if (r && (r.ok || r.type === 'opaque')) c.put(req, r.clone());
       return r;
     }).catch(() => null);
     if (hit) { e.waitUntil(net); return hit; }

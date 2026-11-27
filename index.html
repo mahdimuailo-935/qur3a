@@ -18,30 +18,41 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&display=swap">
 <style>
 /* VOICE   a party game for friends around one phone: quick, playful, nothing to read twice
-   IDEA    a night game table where every fingertip lights its own glowing token
+   IDEA    a night game table: pick the game from three tokens, then the whole screen becomes the table
    PICTURE the live arena: a ring under each finger, countdown arcs, then the verdict drawn on the table
    COLOUR  ink-violet table #15121d, ten bright token colours, team red #ff3d55 and team blue #2f80ff
-   TYPE    Readex Pro 700 for the title and rank numbers, Readex Pro 400/500 for labels
-   LAYOUT  slim header with title and timer, three-way mode switch, the arena fills the rest of the screen */
+   TYPE    Readex Pro 700 for titles and rank numbers, Readex Pro 400/500 for labels
+   LAYOUT  start screen: title, three large mode cards, wait-time switch; game: full-screen arena, small back button */
 :root{color-scheme:dark;--bg:#15121d;--panel:#1e1929;--ink:#f6f3ff;--mute:#aaa3bf;--line:#2f2942;--red:#ff3d55;--blue:#2f80ff}
 :root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
 html,body{height:100%}
-body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:16px/1.5 "Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px 10px}
-h1{margin:0;font-size:clamp(24px,6vw,32px);line-height:1.05;font-weight:700;letter-spacing:-.02em}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Readex Pro",system-ui,"Segoe UI",Tahoma,sans-serif;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer}
-.chip{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line);background:var(--panel);font-size:15px;font-weight:500;white-space:nowrap}
-.chip svg{width:18px;height:18px;flex:none}
-.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 16px 12px;padding:4px;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
-.modes button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:58px;border:0;border-radius:14px;background:transparent;color:var(--mute);font-size:14px;font-weight:500;transition:background .2s,color .2s}
-.modes svg{width:22px;height:22px}
-.modes button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
-.chip:focus-visible,.modes button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.chip,.modes{transition:opacity .2s}
-body.busy .chip,body.busy .modes{opacity:.4;pointer-events:none}
-#arena{position:relative;flex:1;margin:0 8px 8px;border-radius:26px;overflow:hidden;border:1px solid var(--line);background:radial-gradient(110% 80% at 50% 50%,#251f36 0%,#191424 55%,#120f19 100%);touch-action:none}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#menu{min-height:100%;display:flex;flex-direction:column;gap:22px;max-width:560px;margin:0 auto;padding:32px 18px 24px}
+#menu h1{margin:0;font-size:clamp(32px,9vw,44px);line-height:1.05;font-weight:700;letter-spacing:-.02em}
+#menu .lead{margin:6px 0 0;color:var(--mute);font-size:16px}
+.cards{display:grid;gap:12px}
+.card{display:flex;align-items:center;gap:16px;width:100%;min-height:100px;padding:16px;border:1px solid var(--line);border-radius:22px;background:var(--panel);text-align:start;transition:transform .12s,background .2s}
+.card:active{transform:scale(.98);background:#272135}
+.card .ic{flex:none;display:grid;place-items:center;width:62px;height:62px;border-radius:18px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c)}
+.card .ic svg{width:32px;height:32px}
+.card b{display:block;font-size:20px;line-height:1.25;font-weight:700}
+.card small{display:block;margin-top:3px;color:var(--mute);font-size:14px;line-height:1.45}
+.card .go{flex:none;width:22px;height:22px;margin-inline-start:auto;color:var(--mute)}
+.dur{display:grid;gap:10px;margin-top:auto}
+.dur>span{color:var(--mute);font-size:15px}
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:var(--panel);border:1px solid var(--line)}
+.seg button{min-height:48px;border:0;border-radius:12px;background:transparent;color:var(--mute);font-size:15px;font-weight:500;white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+#game{position:fixed;inset:0;overflow:hidden;touch-action:none}
+#arena{position:absolute;inset:0;overflow:hidden;background:radial-gradient(110% 80% at 50% 50%,#251f36 0%,#191424 55%,#120f19 100%);touch-action:none}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#back{position:absolute;top:12px;right:12px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 16px 0 14px;border:1px solid var(--line);border-radius:22px;background:rgba(30,25,41,.88);font-size:15px;font-weight:500;transition:opacity .2s}
+#back svg{width:18px;height:18px}
+body.busy #back{opacity:0;pointer-events:none}
 #idle{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:8px;padding:24px;text-align:center;pointer-events:none;transition:opacity .25s}
 #idle.hide,#status.hide{opacity:0}
 .ghosts{position:relative;width:184px;height:118px;margin-bottom:14px}
@@ -51,11 +62,11 @@ body.busy .chip,body.busy .modes{opacity:.4;pointer-events:none}
 .ghosts i:nth-child(2){right:60px;top:6px;color:#ffe14d;animation-delay:.4s}
 .ghosts i:nth-child(3){right:114px;top:48px;color:#3ddbd9;animation-delay:.8s}
 @keyframes breathe{0%,100%{transform:scale(.9)}50%{transform:scale(1.04)}}
-@media (prefers-reduced-motion:reduce){.ghosts i{animation:none}}
+@media (prefers-reduced-motion:reduce){.ghosts i{animation:none}.card{transition:none}}
 #idle strong{font-size:clamp(28px,7.5vw,40px);line-height:1.08;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
 #idle p{margin:0;max-width:32ch;font-size:16px;text-wrap:balance}
 #idle .sub{color:var(--mute);font-size:15px}
-#status{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;max-width:calc(100% - 24px);padding:8px 18px;border-radius:20px;background:rgba(12,10,18,.8);text-align:center;font-size:16px;font-weight:500;pointer-events:none;transition:opacity .2s}
+#status{position:absolute;top:68px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:max-content;max-width:calc(100% - 24px);padding:8px 18px;border-radius:20px;background:rgba(12,10,18,.8);text-align:center;font-size:16px;font-weight:500;pointer-events:none;transition:opacity .2s}
 #status small{color:var(--mute);font-size:13px;font-weight:400}
 #status small:empty{display:none}
 .pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
@@ -65,36 +76,61 @@ body.busy .chip,body.busy .modes{opacity:.4;pointer-events:none}
 </style>
 </head>
 <body>
-<header>
-  <h1>قرعة الأصابع</h1>
-  <button class="chip" id="dur" type="button" aria-label="مدة الانتظار"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 2M9.5 2.5h5"/></svg><span id="durTxt">ثانيتان</span></button>
-</header>
-<nav class="modes" aria-label="نوع القرعة">
-  <button type="button" id="m-one" data-m="one" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></svg>شخص واحد</button>
-  <button type="button" id="m-order" data-m="order" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 20.5h18"/><rect x="9" y="5" width="6" height="15.5" rx="1"/><rect x="3" y="11" width="6" height="9.5" rx="1"/><rect x="15" y="14" width="6" height="6.5" rx="1"/></svg>ترتيب</button>
-  <button type="button" id="m-teams" data-m="teams" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="5.2" fill="currentColor"/><circle cx="16" cy="12" r="5.2" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>فريقان</button>
-</nav>
-<main id="arena">
-  <canvas id="cv" aria-hidden="true"></canvas>
-  <div id="idle">
-    <div class="ghosts" aria-hidden="true"><i></i><i></i><i></i></div>
-    <strong>ضعوا أصابعكم على الشاشة</strong>
-    <p id="idleMode">يبقى إصبع واحد فقط، وهو المختار</p>
-    <p class="sub" id="idleSub">تظهر النتيجة بعد ثانيتين من ثبات الأصابع</p>
+<section id="menu">
+  <div>
+    <h1>قرعة الأصابع</h1>
+    <p class="lead">اختر نوع القرعة</p>
   </div>
-  <div id="status" class="hide" role="status" aria-live="polite"><span id="stMain"></span><small id="stHint"></small></div>
-</main>
+  <div class="cards">
+    <button class="card" type="button" id="c-one" data-m="one" style="--c:#ffe14d">
+      <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></svg></span>
+      <span><b>شخص واحد</b><small>يبقى إصبع واحد فقط، وهو المختار</small></span>
+      <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button class="card" type="button" id="c-order" data-m="order" style="--c:#3ddbd9">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 20.5h18"/><rect x="9" y="5" width="6" height="15.5" rx="1"/><rect x="3" y="11" width="6" height="9.5" rx="1"/><rect x="15" y="14" width="6" height="6.5" rx="1"/></svg></span>
+      <span><b>ترتيب</b><small>يأخذ كل إصبع رقمًا من 1 إلى عدد المشاركين</small></span>
+      <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button class="card" type="button" id="c-teams" data-m="teams" style="--c:#2f80ff">
+      <span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="5.2" fill="#ff3d55"/><circle cx="16" cy="12" r="5.2" fill="#2f80ff"/></svg></span>
+      <span><b>فريقان</b><small>ينقسم الجميع إلى أحمر وأزرق بالتساوي</small></span>
+      <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+  </div>
+  <div class="dur">
+    <span>مدة الانتظار قبل النتيجة</span>
+    <div class="seg" id="durSeg" role="group" aria-label="مدة الانتظار">
+      <button type="button" id="d-1" data-d="1" aria-pressed="false">ثانية</button>
+      <button type="button" id="d-2" data-d="2" aria-pressed="true">ثانيتان</button>
+      <button type="button" id="d-3" data-d="3" aria-pressed="false">3 ثوانٍ</button>
+      <button type="button" id="d-5" data-d="5" aria-pressed="false">5 ثوانٍ</button>
+    </div>
+  </div>
+</section>
+<div id="game" hidden>
+  <main id="arena">
+    <canvas id="cv" aria-hidden="true"></canvas>
+    <div id="idle">
+      <div class="ghosts" aria-hidden="true"><i></i><i></i><i></i></div>
+      <strong>ضعوا أصابعكم في أي مكان على الشاشة</strong>
+      <p id="idleMode">يبقى إصبع واحد فقط، وهو المختار</p>
+      <p class="sub" id="idleSub">تظهر النتيجة بعد ثانيتين من ثبات الأصابع</p>
+    </div>
+    <div id="status" class="hide" role="status" aria-live="polite"><span id="stMain"></span><small id="stHint"></small></div>
+  </main>
+  <button id="back" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>رجوع</button>
+</div>
 <script>
 {
 const $=id=>document.getElementById(id);
-const arena=$('arena'),cv=$('cv'),ctx=cv.getContext('2d'),idle=$('idle'),statusEl=$('status'),stMain=$('stMain'),stHint=$('stHint');
-const durBtn=$('dur'),durTxt=$('durTxt'),idleMode=$('idleMode'),idleSub=$('idleSub');
-const modeBtns=[...document.querySelectorAll('.modes button')];
+const menu=$('menu'),game=$('game'),arena=$('arena'),cv=$('cv'),ctx=cv.getContext('2d'),idle=$('idle'),statusEl=$('status'),stMain=$('stMain'),stHint=$('stHint');
+const backBtn=$('back'),idleMode=$('idleMode'),idleSub=$('idleSub');
+const cards=[...document.querySelectorAll('.card')],durBtns=[...document.querySelectorAll('#durSeg button')];
 const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 const PAL=['#ff5d73','#ffb020','#ffe14d','#9be15d','#3ddbd9','#5aa9ff','#b69cff','#ff8fd1','#ff7a3d','#53e3a6'].map(hex);
 const RED=hex('#ff3d55'),BLUE=hex('#2f80ff'),WHITE=[255,255,255];
 const DURS=[1,2,3,5];
-const DUR_NAME={1:'ثانية',2:'ثانيتان',3:'3 ثوانٍ',5:'5 ثوانٍ'};
 const DUR_AFTER={1:'بعد ثانية',2:'بعد ثانيتين',3:'بعد 3 ثوانٍ',5:'بعد 5 ثوانٍ'};
 const MODE_TEXT={one:'يبقى إصبع واحد فقط، وهو المختار',order:'يأخذ كل إصبع رقمًا من 1 إلى عدد المشاركين',teams:'ينقسم الجميع إلى أحمر وأزرق بالتساوي'};
 const TAU=Math.PI*2,BORN=320,DIE=260;
@@ -245,21 +281,31 @@ function resize(){
   cv.width=Math.max(1,Math.round(W*dpr));cv.height=Math.max(1,Math.round(H*dpr));
   R=Math.max(40,Math.min(58,Math.min(W,H)*.13));draw(now());kick();
 }
-function renderMode(){modeBtns.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===mode)));idleMode.textContent=MODE_TEXT[mode]}
-function renderDur(){durTxt.textContent=DUR_NAME[dur];durBtn.setAttribute('aria-label','مدة الانتظار: '+DUR_NAME[dur]);idleSub.textContent='تظهر النتيجة '+DUR_AFTER[dur]+' من ثبات الأصابع'}
+function renderDur(){durBtns.forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.d===dur)));idleSub.textContent='تظهر النتيجة '+DUR_AFTER[dur]+' من ثبات الأصابع'}
+function reset(){fingers=[];down.clear();phase='gather';winner=null;cancelAt=0;changed()}
+function startGame(m){
+  mode=m;save();idleMode.textContent=MODE_TEXT[mode];reset();
+  menu.hidden=true;game.hidden=false;
+  try{if(location.hash!=='#play')history.pushState({play:1},'','#play')}catch(e){}
+  resize();
+}
+function toMenu(){reset();game.hidden=true;menu.hidden=false}
 
-modeBtns.forEach(b=>b.addEventListener('click',()=>{if(down.size)return;mode=b.dataset.m;save();fingers=[];phase='gather';winner=null;renderMode();changed()}));
-durBtn.addEventListener('click',()=>{if(down.size)return;dur=DURS[(DURS.indexOf(dur)+1)%DURS.length];save();renderDur();updateStatus()});
+cards.forEach(b=>b.addEventListener('click',()=>startGame(b.dataset.m)));
+durBtns.forEach(b=>b.addEventListener('click',()=>{dur=+b.dataset.d;save();renderDur()}));
+backBtn.addEventListener('click',()=>{if(down.size)return;if(location.hash==='#play')history.back();else toMenu()});
+addEventListener('popstate',()=>{if(!game.hidden)toMenu()});
 const opt={passive:false};
 arena.addEventListener('touchstart',onStart,opt);
 arena.addEventListener('touchmove',onMove,opt);
 arena.addEventListener('touchend',onEnd,opt);
 arena.addEventListener('touchcancel',onEnd,opt);
-arena.addEventListener('contextmenu',e=>e.preventDefault());
+game.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('gesturestart',e=>e.preventDefault());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;down.clear();if(phase==='gather')fingers=[];else fingers.forEach(f=>{f.lifted=true});changed()});
 const ro=new ResizeObserver(resize);ro.observe(arena);
-renderMode();renderDur();
+if(location.hash==='#play'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+renderDur();
 if(document.fonts)document.fonts.ready.then(kick);
 }
 </script>
